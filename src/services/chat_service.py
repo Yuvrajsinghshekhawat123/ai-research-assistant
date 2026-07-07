@@ -45,6 +45,7 @@ from memory import ConversationMemory
 from prompts.chat_prompt import ChatPromptBuilder
 from llm import GeminiClient
 from models.chat_message import ChatMessage
+from src.models.role import Role
 
 
 class ChatService:
@@ -57,7 +58,7 @@ class ChatService:
     def chat(self, user_input: str) -> str:
         # Step 1
         user_message = ChatMessage(
-            role="user",
+            role=Role.USER,
             content=user_input
         )
 
@@ -75,7 +76,7 @@ class ChatService:
 
         # Step 6
         assistant_message = ChatMessage(
-            role="assistant",
+            role=Role.ASSISTANT,
             content=response
         )
 

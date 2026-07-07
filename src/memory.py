@@ -9,7 +9,7 @@ class ConversationMemory:
         self.messages.append(message)
 
     def get_messages(self) -> list[ChatMessage]:
-        return self.messages
+        return self.messages.copy();
 
     def clear(self):
         self.messages.clear()
@@ -55,3 +55,39 @@ becomes
 ]
 ]
 '''
+
+
+
+"""
+Q- why we do .copy():
+
+What if we return the original list?
+def get_messages(self):
+    return self.messages
+
+Now someone does:
+msgs = chat_service.get_messages()
+
+What is msgs?
+It is not a new list.
+It is another variable pointing to the same list.
+
+
+Now imagine someone writes
+msgs.clear()
+What happens?
+
+msgs
+ │
+ ▼
+[]
+
+Since both point to the same list,
+
+self.messages
+also becomes
+
+[]
+
+😱 The chatbot's memory is deleted!
+"""

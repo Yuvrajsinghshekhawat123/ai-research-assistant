@@ -8,7 +8,7 @@ def main():
     print("🤖 AI Research Assistant")
     print("=" * 40)
     chat_service = ChatService()
-
+    
     while True:
         user_input = input("\nYou: ")
         response=chat_service.chat(user_input)

@@ -108,10 +108,11 @@ Lots of boilerplate.
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from models.role import Role
 
 @dataclass
 class ChatMessage:
-    role: str
+    role: Role
     content: str
     timestamp: datetime =field(default_factory=datetime.now)
 

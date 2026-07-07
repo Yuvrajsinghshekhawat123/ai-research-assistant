@@ -7,7 +7,7 @@ class ChatPromptBuilder:
         prompt = ""
 
         for message in messages:
-            role = message.role.capitalize()
+            role = message.role.value.capitalize()
             prompt += f"{role}: {message.content}\n"
 
         prompt += "Assistant:"

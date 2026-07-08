@@ -41,11 +41,13 @@ before calling Gemini.
 '''
 
 
-from memory import ConversationMemory
-from prompts.chat_prompt import ChatPromptBuilder
-from llm import GeminiClient
-from models.chat_message import ChatMessage
+from src.memory import ConversationMemory
+from src.prompts.chat_prompt import ChatPromptBuilder
+ 
+from src.models.chat_message import ChatMessage
 from src.models.role import Role
+from src.utils.LangChain_messages import CustomObjToLangchainMessage
+from src.agents.research_agent import ResearchAgent
 
 
 class ChatService:
@@ -53,7 +55,8 @@ class ChatService:
     def __init__(self):
         self.memory = ConversationMemory()
         self.prompt_builder = ChatPromptBuilder()
-        self.llm = GeminiClient()
+        self.research_agent = ResearchAgent()
+         
 
     def chat(self, user_input: str) -> str:
         # Step 1
@@ -66,13 +69,18 @@ class ChatService:
         self.memory.add_message(user_message)
 
         # Step 3
-        history = self.memory.get_messages()
+        history = CustomObjToLangchainMessage.convert_history(
+            self.memory.get_messages()
+        )
 
+        
+        
         # Step 4
-        prompt = self.prompt_builder.build(history)
-
-        # Step 5
-        response = self.llm.chat(prompt)
+        # prompt = self.prompt_builder.build(history)
+        response = self.research_agent.run(
+            question=user_input,
+            history=history
+        )
 
         # Step 6
         assistant_message = ChatMessage(

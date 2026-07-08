@@ -108,7 +108,7 @@ Lots of boilerplate.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from models.role import Role
+from src.models.role import Role
 
 @dataclass
 class ChatMessage:

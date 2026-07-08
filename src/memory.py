@@ -1,4 +1,4 @@
-from models.chat_message import ChatMessage
+from src.models.chat_message import ChatMessage
 
 
 class ConversationMemory:

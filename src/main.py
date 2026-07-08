@@ -1,5 +1,5 @@
-from config import GEMINI_API_KEY
-from services.chat_service import ChatService
+from src.config import GEMINI_API_KEY
+from src.services.chat_service import ChatService
 
 
 def main():

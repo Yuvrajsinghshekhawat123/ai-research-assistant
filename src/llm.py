@@ -1,13 +1,15 @@
-from google import genai
-from config import GEMINI_API_KEY
+from langchain_google_genai import ChatGoogleGenerativeAI
+from src.config import GEMINI_API_KEY
+
 
 class GeminiClient:
-    def __init__(self): #Constructor
-        self.client= genai.Client(api_key=GEMINI_API_KEY) #This creates a connection object., The client lets us communicate with Google's servers.
-
-    def chat(self,message:str)-> str:
-        resp=self.client.models.generate_content(
+    def __init__(self):
+        self.model = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
-            contents=message,
+            google_api_key=GEMINI_API_KEY,
+            temperature=0,
         )
-        return resp.text
+
+    def chat(self, message: str) -> str:
+        response = self.model.invoke(message)
+        return response.content

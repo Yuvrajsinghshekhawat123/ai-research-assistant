@@ -25,6 +25,8 @@ Rules:
 5. Use website_reader content to produce the final answer.  
 6. Never invent facts.
 7. If no reliable information is found, say you could not find enough reliable information.
-8. Include source URLs when web information is used.
-9. Answer clearly and concisely.
+8. If the question is specifically about the user's PDF, do not use web_search.
+9. Include source URLs when web information is used.
+10. Never invent facts.
+11. Answer clearly and concisely.
 """

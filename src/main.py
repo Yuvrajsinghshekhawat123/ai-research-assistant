@@ -12,6 +12,7 @@ def main():
     while True:
         user_input = input("\nYou: ")
         response=chat_service.chat(user_input)
+        result = chat_service.last_research_result
 
 
 
@@ -22,6 +23,15 @@ def main():
 
 
         print(f"\nAI:\n{response}")
+
+        
+        if result:
+            print("\n--- Research Trace ---")
+            print("Tools used:", result.tools_used)
+            print("PDF context used:", result.pdf_context_used)
+            print("Web URLs:", result.web_urls)
+            print("Evidence count:", len(result.evidence))
+
 
 
 if __name__ == "__main__":

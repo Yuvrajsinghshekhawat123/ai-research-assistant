@@ -56,42 +56,47 @@ class ChatService:
         self.memory = ConversationMemory()
         self.prompt_builder = ChatPromptBuilder()
         self.research_agent = ResearchAgent()
+        self.last_research_result = None
          
 
     def chat(self, user_input: str) -> str:
-        # Step 1
+        history = CustomObjToLangchainMessage.convert_history(
+            self.memory.get_messages()
+        )
+
+        # catch quota errors so your app does not crash:
+        try:
+            research_result = self.research_agent.run(
+                question=user_input,
+                history=history
+            )
+        except Exception as error:
+            error_text = str(error)
+
+            if "RESOURCE_EXHAUSTED" in error_text or "429" in error_text:
+                return "Gemini API quota is exhausted. Please wait and try again later, or switch to another Gemini model/API key."
+
+            return f"AI service error: {error}"
+        
+
+
+        response = research_result.answer
+        self.last_research_result = research_result
+
         user_message = ChatMessage(
             role=Role.USER,
             content=user_input
         )
 
-        # Step 2
-        self.memory.add_message(user_message)
-
-        # Step 3
-        history = CustomObjToLangchainMessage.convert_history(
-            self.memory.get_messages()
-        )
-
-        
-        
-        # Step 4
-        # prompt = self.prompt_builder.build(history)
-        response = self.research_agent.run(
-            question=user_input,
-            history=history
-        )
-
-        # Step 6
         assistant_message = ChatMessage(
             role=Role.ASSISTANT,
             content=response
+
         )
 
-        # Step 7
+        self.memory.add_message(user_message)
         self.memory.add_message(assistant_message)
 
-        # Step 8
         return response
 
 

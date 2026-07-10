@@ -1,17 +1,17 @@
 import re
-import requests
 from bs4 import BeautifulSoup
 from readability import Document
 from langchain_core.tools import tool
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 
 
 class WebsiteReaderTool:
     """
-    Opens a webpage and extracts the main readable content.
-    Removes scripts, styles, navigation, headers, footers, and ads where possible.
+    Opens a webpage using Playwright, extracts readable content,
+    removes unwanted page elements, and returns clean text.
     """
 
-    def __init__(self, timeout: int = 10, max_chars: int = 8000):
+    def __init__(self, timeout: int = 15, max_chars: int = 8000):
         self.timeout = timeout
         self.max_chars = max_chars
 
@@ -20,32 +20,20 @@ class WebsiteReaderTool:
             return "No URL provided."
 
         try:
-            response = requests.get(
-                url,
-                timeout=self.timeout,
-                headers={
-                    "User-Agent": (
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36 Chrome/120 Safari/537.36"
-                    )
-                },
-            )
-            response.raise_for_status()
-        except requests.RequestException as error:
+            html = self._load_page_with_playwright(url)
+        except Exception as error:
             return f"Failed to read website: {error}"
 
         try:
-            document = Document(response.text)
+            document = Document(html)
             title = document.title()
-            html = document.summary()
+            main_html = document.summary()
         except Exception:
             title = "Untitled page"
-            html = response.text
+            main_html = html
 
-        soup = BeautifulSoup(html, "html.parser")
-
-        for tag in soup(["script", "style", "noscript", "header", "footer", "nav", "aside"]):
-            tag.decompose()
+        soup = BeautifulSoup(main_html, "html.parser")
+        self._remove_unwanted_elements(soup)
 
         text = soup.get_text(separator="\n")
         text = self._clean_text(text)
@@ -58,9 +46,84 @@ class WebsiteReaderTool:
 
         return f"Title: {title}\nURL: {url}\n\nContent:\n{text}"
 
+    def _load_page_with_playwright(self, url: str) -> str:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+
+            page = browser.new_page(
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 Chrome/120 Safari/537.36"
+                )
+            )
+
+            try:
+                page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=self.timeout * 1000,
+                )
+
+                page.wait_for_timeout(2000)
+
+                html = page.content()
+                return html
+
+            except PlaywrightTimeoutError:
+                return page.content()
+
+            finally:
+                browser.close()
+
+    def _remove_unwanted_elements(self, soup: BeautifulSoup) -> None:
+        unwanted_tags = [
+            "script",
+            "style",
+            "noscript",
+            "header",
+            "footer",
+            "nav",
+            "aside",
+            "form",
+            "button",
+            "iframe",
+            "svg",
+        ]
+
+        for tag in soup(unwanted_tags):
+            tag.decompose()
+
+        unwanted_keywords = [
+            "cookie",
+            "banner",
+            "popup",
+            "modal",
+            "advert",
+            "ads",
+            "sidebar",
+            "newsletter",
+            "subscribe",
+            "social",
+            "comment",
+            "footer",
+            "header",
+            "nav",
+            "menu",
+        ]
+
+        for element in soup.find_all(True):
+            element_id = " ".join(element.get("id", "").lower().split())
+            element_class = " ".join(element.get("class", [])).lower()
+
+            combined = f"{element_id} {element_class}"
+
+            if any(keyword in combined for keyword in unwanted_keywords):
+                element.decompose()
+
     def _clean_text(self, text: str) -> str:
         text = re.sub(r"\n{3,}", "\n\n", text)
         text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r" +\n", "\n", text)
         return text.strip()
 
 
@@ -70,7 +133,7 @@ website_reader_service = WebsiteReaderTool()
 @tool
 def website_reader(url: str) -> str:
     """
-    Open a webpage URL and extract clean readable content.
+    Open a webpage URL using Playwright and extract clean readable content.
     Use this after web_search finds a useful URL.
     """
     return website_reader_service.read(url)

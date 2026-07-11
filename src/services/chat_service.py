@@ -47,15 +47,15 @@ from src.prompts.chat_prompt import ChatPromptBuilder
 from src.models.chat_message import ChatMessage
 from src.models.role import Role
 from src.utils.LangChain_messages import CustomObjToLangchainMessage
-from src.agents.research_agent import ResearchAgent
-
+# from src.agents.research_agent import ResearchAgent
+from src.agents.research_graph import ResearchGraph
 
 class ChatService:
 
     def __init__(self):
         self.memory = ConversationMemory()
         self.prompt_builder = ChatPromptBuilder()
-        self.research_agent = ResearchAgent()
+        self.research_agent = ResearchGraph()
         self.last_research_result = None
          
 
